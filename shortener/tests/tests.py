@@ -1,6 +1,8 @@
 import pytest
 from django.urls import reverse
 from django.test import Client
+
+from shortener.cron import delete_unused_aliases
 from shortener.models import Url
 from shortener.services import alias_generator
 
@@ -39,4 +41,12 @@ def test_alias_click_view_exception(url):
     path = reverse('click', kwargs={'alias': alias})
     response = Client().get(path)
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_delete_unused_aliases(urls, visited_urls):
+    delete_unused_aliases()
+    assert len(Url.objects.filter(last_visit=None)) == 2
+    assert len(Url.objects.all()) == 4
+
 
